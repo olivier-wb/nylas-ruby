@@ -6,7 +6,7 @@ module Nylas
     attr_accessor :client
 
     extend Forwardable
-    def_delegators :client, :execute, :get, :post, :put, :delete, :app_id
+    def_delegators :client, :execute, :get, :post, :put, :delete, :app_id, :api_server
 
     include Logging
 

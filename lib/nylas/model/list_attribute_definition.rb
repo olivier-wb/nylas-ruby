@@ -18,9 +18,13 @@ module Nylas
         as_array(list).map { |item| type.cast(item) }
       end
 
+      def as_array(list)
+        list.is_a?(Array) ? list : [list]
+      end
+
       def serialize(list)
         list = default if list.nil? || list.empty?
-        list.map { |item| type.serialize(item) }
+        as_array(list).map { |item| type.serialize(item) }
       end
 
       def type

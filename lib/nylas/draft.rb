@@ -14,7 +14,8 @@ module Nylas
     attribute :account_id, :string
     attribute :thread_id, :string
     attribute :reply_to_message_id, :string
-
+    attribute :tracking, :tracking
+    
     has_n_of_attribute :to, :email_address
     has_n_of_attribute :from, :email_address
     has_n_of_attribute :cc, :email_address
@@ -30,6 +31,7 @@ module Nylas
 
     has_n_of_attribute :events, :event
     has_n_of_attribute :files, :file
+    has_n_of_attribute :file_ids, :string
     attribute :folder, :folder
     has_n_of_attribute :labels, :label
 
