@@ -1,21 +1,32 @@
+inherit_from: .rubocop_todo.yml
+
 require: rubocop-rspec
 AllCops:
-  TargetRubyVersion: 2.2
+  TargetRubyVersion: 2.5
   DisplayCopNames: true
   DisplayStyleGuide: true
   Exclude:
     - examples/**/*
+    - vendor/**/*
+    - gemfiles/vendor/**/*
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 
-Metrics/LineLength:
+Layout/LineLength:
   Max: 110
 
 Metrics/BlockLength:
   Exclude:
     - "*.gemspec"
     - "spec/**/*_spec.rb"
+
+Metrics/ParameterLists:
+  Max: 8
+
+Metrics/ClassLength:
+  Exclude:
+    - "lib/nylas/api.rb"
 
 Naming/FileName:
   Exclude:

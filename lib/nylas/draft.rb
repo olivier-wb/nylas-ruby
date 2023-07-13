@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Nylas
   # Ruby representatin of a Nylas Draft object
   # @see https://docs.nylas.com/reference#drafts
@@ -25,16 +27,21 @@ module Nylas
     attribute :body, :string
     attribute :starred, :boolean
     attribute :unread, :boolean
-    attribute :tracking, :tracking
 
     has_n_of_attribute :events, :event
     has_n_of_attribute :files, :file
-    has_n_of_attribute :file_ids, :string
     attribute :folder, :folder
     has_n_of_attribute :labels, :label
 
+    attribute :tracking, :message_tracking
+
+    transfer :api, to: %i[events files folder labels]
+
     def send!
-      execute(method: :post, path: "/send", payload: to_json)
+      return execute(method: :post, path: "/send", payload: to_json) if tracking
+
+      save
+      execute(method: :post, path: "/send", payload: JSON.dump(draft_id: id, version: version))
     end
 
     def starred?

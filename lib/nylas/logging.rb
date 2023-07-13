@@ -1,10 +1,9 @@
-# We are explicitely choosing to allow clients to use or not use informed at their discretion
-# rubocop:disable Lint/HandleExceptions
+# frozen_string_literal: true
+
 begin
   require "informed"
 rescue LoadError
 end
-# rubocop:enable Lint/HandleExceptions
 
 module Nylas
   # Exposes a shared logger for debugging purposes
@@ -20,6 +19,7 @@ module Nylas
 
     def self.logger
       return @logger if @logger
+
       @logger = Logger.new(STDOUT)
       @logger.level = level
       @logger

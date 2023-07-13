@@ -1,13 +1,18 @@
+# frozen_string_literal: true
+
 require "simplecov"
 SimpleCov.start
 
 require "nylas"
 require "pry"
 require "webmock/rspec"
+require "rspec-json_matcher"
+
+RSpec.configuration.include RSpec::JsonMatcher
 
 class FakeAPI
-  def execute(method:, path:, payload: nil)
-    requests.push(method: method, path: path, payload: payload)
+  def execute(method:, path:, payload: nil, query: {})
+    requests.push(method: method, path: path, payload: payload, query: query)
   end
 
   def requests
@@ -40,6 +45,11 @@ class FullModel
   attribute :web_page, :web_page
 
   has_n_of_attribute :web_pages, :web_page
+  has_n_of_attribute :files, :file
+
+  attr_accessor :api
+
+  transfer :api, to: %i[files]
 end
 
 class NotCreatableModel

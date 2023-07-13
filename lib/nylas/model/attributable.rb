@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module Nylas
   module Model
-    # Allows defining of tyypecastable attributes on a model
+    # Allows defining of typecastable attributes on a model
     module Attributable
       def self.included(model)
         model.extend(ClassMethods)
@@ -10,14 +12,6 @@ module Nylas
         assign(**initial_data)
       end
 
-      protected def assign(**data)
-        data.each do |attribute_name, value|
-          if respond_to?(:"#{attribute_name}=")
-            send(:"#{attribute_name}=", value)
-          end
-        end
-      end
-
       def attributes
         @attributes ||= Attributes.new(self.class.attribute_definitions)
       end
@@ -25,6 +19,16 @@ module Nylas
       # @return [Hash] Representation of the model with values serialized into primitives based on their Type
       def to_h
         attributes.to_h
+      end
+
+      protected
+
+      def assign(**data)
+        data.each do |attribute_name, value|
+          if respond_to?(:"#{attribute_name}=")
+            send(:"#{attribute_name}=", value)
+          end
+        end
       end
 
       # Methods to call when tweaking Attributable classes

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
 describe Nylas::Draft do
@@ -30,13 +32,41 @@ describe Nylas::Draft do
       api = instance_double(Nylas::API)
       draft = described_class.from_hash({ id: "draft-1234", "version": 5 }, api: api)
       update_json = draft.to_json
-      allow(api).to receive(:execute)
+      allow(api).to receive(:execute).and_return({})
       allow(api).to receive(:execute).with(method: :put, path: "/drafts/draft-1234", payload: update_json)
                                      .and_return(id: "draft-1234", version: "6")
 
       draft.send!
-      expect(api).to have_received(:execute).with(method: :post, path: "/send",
-                                                  payload: update_json)
+
+      expect(api).to have_received(:execute).with(
+        method: :put,
+        path: "/drafts/#{draft.id}",
+        payload: update_json,
+        query: {}
+      )
+      expect(api).to have_received(:execute).with(
+        method: :post,
+        path: "/send",
+        payload: JSON.dump(draft_id: draft.id, version: draft.version),
+        query: {}
+      )
+    end
+
+    it "includes tracking when sending the draft" do
+      api = instance_double(Nylas::API)
+      draft = described_class.from_hash({ id: "draft-1234", "version": 5 }, api: api)
+      draft.tracking = { opens: true, links: true, thread_replies: true, payload: "this is a payload" }
+      update_json = draft.to_json
+      allow(api).to receive(:execute)
+
+      draft.send!
+
+      expect(api).to have_received(:execute).with(
+        method: :post,
+        path: "/send",
+        payload: update_json,
+        query: {}
+      )
     end
   end
 
@@ -60,7 +90,8 @@ describe Nylas::Draft do
                          size: 1264 }],
                folder: { display_name: "Inbox", id: "folder-inbox", name: "inbox" },
                labels: [{ display_name: "Inbox", id: "label-inbox", name: "inbox" },
-                        { display_name: "All Mail", id: "label-all", name: "all" }] }
+                        { display_name: "All Mail", id: "label-all", name: "all" }],
+               tracking: { opens: true, links: true, thread_replies: true, payload: "this is a payload" } }
 
       draft = described_class.from_json(JSON.dump(data), api: api)
       expect(draft.id).to eql "drft-592"
@@ -95,24 +126,34 @@ describe Nylas::Draft do
       expect(draft.files[0].filename).to be_nil
       expect(draft.files[0].id).to eql "file-abc35"
       expect(draft.files[0].size).to be 1264
+      expect(draft.files[0].api).to be api
 
       expect(draft.files[1].content_type).to eql "application/ics"
       expect(draft.files[1].filename).to eql "invite.ics"
       expect(draft.files[1].id).to eql "file-xyz-9234"
       expect(draft.files[1].size).to be 1264
+      expect(draft.files[1].api).to be api
 
       # Note, drafts will either be in a folder *or* labeled, not both.
       expect(draft.folder.display_name).to eql "Inbox"
       expect(draft.folder.name).to eql "inbox"
       expect(draft.folder.id).to eql "folder-inbox"
+      expect(draft.folder.api).to be api
 
       expect(draft.labels[0].display_name).to eql "Inbox"
       expect(draft.labels[0].id).to eql "label-inbox"
       expect(draft.labels[0].name).to eql "inbox"
+      expect(draft.labels[0].api).to be api
 
       expect(draft.labels[1].display_name).to eql "All Mail"
       expect(draft.labels[1].id).to eql "label-all"
       expect(draft.labels[1].name).to eql "all"
+      expect(draft.labels[1].api).to be api
+
+      expect(draft.tracking.opens).to be true
+      expect(draft.tracking.links).to be true
+      expect(draft.tracking.thread_replies).to be true
+      expect(draft.tracking.payload).to eql "this is a payload"
     end
   end
 end

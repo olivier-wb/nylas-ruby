@@ -1,7 +1,10 @@
+# frozen_string_literal: true
+
 module Nylas
   # An enumerable for working with index and search endpoints
   class Collection
     attr_accessor :model, :api, :constraints
+
     extend Forwardable
     def_delegators :each, :map, :select, :reject, :to_a, :take
     def_delegators :to_a, :first, :last, :[]
@@ -18,7 +21,7 @@ module Nylas
     end
 
     def create(**attributes)
-      instance = model.new(attributes.merge(api: api))
+      instance = model.new(**attributes.merge(api: api))
       instance.save
       instance
     end
@@ -27,11 +30,13 @@ module Nylas
     # @return [Collection<Model>]
     def where(filters)
       raise ModelNotFilterableError, model unless model.filterable?
+
       self.class.new(model: model, api: api, constraints: constraints.merge(where: filters))
     end
 
     def search(query)
       raise ModelNotSearchableError, model unless model.searchable?
+
       SearchCollection.new(model: model, api: api, constraints: constraints.merge(where: { q: query }))
     end
 
@@ -40,6 +45,7 @@ module Nylas
     # @return [Collection<String>]
     def raw
       raise ModelNotAvailableAsRawError, model unless model.exposable_as_raw?
+
       self.class.new(model: model, api: api, constraints: constraints.merge(accept: model.raw_mime_type))
     end
 
@@ -61,8 +67,9 @@ module Nylas
     # Iterates over a single page of results based upon current pagination settings
     def each
       return enum_for(:each) unless block_given?
+
       execute.each do |result|
-        yield(model.new(result.merge(api: api)))
+        yield(model.new(**result.merge(api: api)))
       end
     end
 
@@ -77,6 +84,7 @@ module Nylas
     # Iterates over every result that meets the filters, retrieving a page at a time
     def find_each
       return enum_for(:find_each) unless block_given?
+
       query = self
       accumulated = 0
 
@@ -92,6 +100,7 @@ module Nylas
 
     def next_page(accumulated:, current_page:)
       return nil unless more_pages?(accumulated, current_page)
+
       self.class.new(model: model, api: api, constraints: constraints.next_page)
     end
 
@@ -99,6 +108,7 @@ module Nylas
       return false if current_page.empty?
       return false if constraints.limit && accumulated >= constraints.limit
       return false if constraints.per_page && current_page.length < constraints.per_page
+
       true
     end
 
@@ -109,7 +119,7 @@ module Nylas
     end
 
     def find_raw(id)
-      api.execute(to_be_executed.merge(path: "#{resources_path}/#{id}")).to_s
+      api.execute(**to_be_executed.merge(path: "#{resources_path}/#{id}")).to_s
     end
 
     def resources_path
@@ -117,9 +127,13 @@ module Nylas
     end
 
     def find_model(id)
-      instance = model.from_hash({ id: id }, api: api)
-      instance.reload
-      instance
+      response = api.execute(
+        **to_be_executed.merge(
+          path: "#{resources_path}/#{id}",
+          query: {}
+        )
+      )
+      model.from_hash(response, api: api)
     end
 
     # @return [Hash] Specification for request to be passed to {API#execute}
@@ -131,7 +145,7 @@ module Nylas
     # Retrieves the data from the API for the particular constraints
     # @return [Hash,Array]
     def execute
-      api.execute(to_be_executed)
+      api.execute(**to_be_executed)
     end
   end
 end

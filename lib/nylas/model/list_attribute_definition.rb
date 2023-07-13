@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Nylas
   module Model
     # Allows models to have an attribute which is a lists of another type of thing
@@ -18,11 +20,7 @@ module Nylas
 
       def serialize(list)
         list = default if list.nil? || list.empty?
-        as_array(list).map { |item| type.serialize(item) }
-      end
-
-      def as_array(list)
-        list.is_a?(Array) ? list : [list]
+        list.map { |item| type.serialize(item) }
       end
 
       def type

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
 describe Nylas::Contact do
@@ -12,22 +14,13 @@ describe Nylas::Contact do
         '{ "type": "home", "email": "given@home.example.com" }], ' \
       '"im_addresses": [{ "type": "gtalk", "im_address": "given@gtalk.example.com" }],' \
       '"physical_addresses": [{ "format": "structured", "type": "work",' \
-        '"street_address": "123 N West St", "postal_code": "12345+0987", "city": "Los Angeles", "state": "CA",' \
+        '"street_address": "123 N West St", "postal_code": "12345+0987", "state": "CA",' \
         '"country": "USA" }],' \
       '"phone_numbers": [{ "type": "mobile", "number": "+1234567890" }], ' \
       '"web_pages": [{ "type": "profile", "url": "http://given.example.com" }],' \
-      '"groups": [{"id": "di", "object": "dnwi", "account_id": "doiw", "name": "nfowie", "path": "fnien"}] ' \
-    "}"
-  end
-  let(:partial_address_json) do
-    '{ "id": "1234", "object": "contact", "account_id": "12345", ' \
-      '"given_name":"given", "middle_name": "middle", "surname": "surname", ' \
-      '"birthday": "1984-01-01", "suffix": "Jr.", "nickname": "nick", ' \
-      '"company_name": "company", "job_title": "title", ' \
-      '"manager_name": "manager", "office_location": "the office", ' \
-      '"physical_addresses": [{ "format": "structured", "type": "work",' \
-        '"street_address": "123 N West St", "postal_code": "", "city": "", "state": "",' \
-        '"country": "USA" }]' \
+      '"source": "address_book",' \
+      '"groups": [{"id": "di", "object": "dnwi", "account_id": "doiw", ' \
+        '"name": "nfowie", "path": "fnien"}] ' \
     "}"
   end
   let(:api) { FakeAPI.new }
@@ -96,62 +89,40 @@ describe Nylas::Contact do
       expect(contact.phone_numbers[0].number).to eql("+1234567890")
       expect(contact.web_pages[0].type).to eql("profile")
       expect(contact.web_pages[0].url).to eql("http://given.example.com")
+      expect(contact.source).to eql("address_book")
     end
   end
 
   describe "#to_h" do
     it "serializes attributes into a hash of primitives" do
       contact = described_class.from_json(full_json, api: api)
-      expect(contact.to_h).to eql(id: "1234",
-                                  object: "contact",
-                                  account_id: "12345",
-                                  given_name: "given",
-                                  middle_name: "middle",
-                                  surname: "surname",
-                                  suffix: "Jr.",
-                                  nickname: "nick",
-                                  job_title: "title",
-                                  office_location: "the office",
-                                  manager_name: "manager",
-                                  birthday: "1984-01-01",
-                                  company_name: "company",
-                                  notes: "some notes",
-                                  emails: [{ type: "work", email: "given@work.example.com" },
-                                           { type: "home", email: "given@home.example.com" }],
-                                  im_addresses: [{ type: "gtalk", im_address: "given@gtalk.example.com" }],
-                                  phone_numbers: [{ type: "mobile", number: "+1234567890" }],
-                                  physical_addresses: [{ format: "structured", type: "work",
-                                                         street_address: "123 N West St",
-                                                         postal_code: "12345+0987", city: "Los Angeles", state: "CA",
-                                                         country: "USA" }],
-                                  web_pages: [{ type: "profile", url: "http://given.example.com" }],
-                                  groups: [{id: "di", object: "dnwi", account_id: "doiw", name: "nfowie", path: "fnien"}])
-    end
-
-    it "serializes attributes correctly for a contact with a partial physical address" do
-      contact = described_class.from_json(partial_address_json, api: api)
-      expect(contact.to_h).to eql(id: "1234",
-                                  object: "contact",
-                                  account_id: "12345",
-                                  given_name: "given",
-                                  middle_name: "middle",
-                                  surname: "surname",
-                                  suffix: "Jr.",
-                                  nickname: "nick",
-                                  job_title: "title",
-                                  office_location: "the office",
-                                  manager_name: "manager",
-                                  birthday: "1984-01-01",
-                                  company_name: "company",
-                                  emails: [],
-                                  groups: [],
-                                  im_addresses: [],
-                                  phone_numbers: [],
-                                  web_pages: [],
-                                  physical_addresses: [{ format: "structured", type: "work",
-                                                         street_address: "123 N West St",
-                                                         postal_code: "", city: "", state: "",
-                                                         country: "USA" }])
+      expect(contact.to_h).to eql(
+        id: "1234",
+        object: "contact",
+        account_id: "12345",
+        given_name: "given",
+        middle_name: "middle",
+        surname: "surname",
+        suffix: "Jr.",
+        nickname: "nick",
+        job_title: "title",
+        office_location: "the office",
+        manager_name: "manager",
+        birthday: "1984-01-01",
+        company_name: "company",
+        notes: "some notes",
+        emails: [{ type: "work", email: "given@work.example.com" },
+                 { type: "home", email: "given@home.example.com" }],
+        im_addresses: [{ type: "gtalk", im_address: "given@gtalk.example.com" }],
+        phone_numbers: [{ type: "mobile", number: "+1234567890" }],
+        physical_addresses: [{ format: "structured", type: "work",
+                               street_address: "123 N West St",
+                               postal_code: "12345+0987", state: "CA",
+                               country: "USA" }],
+        web_pages: [{ type: "profile", url: "http://given.example.com" }],
+        groups: [{ id: "di", object: "dnwi", account_id: "doiw", name: "nfowie", path: "fnien" }],
+        source: "address_book"
+      )
     end
   end
 

@@ -1,10 +1,27 @@
-# Nylas REST API Ruby bindings ![Travis build status](https://travis-ci.org/nylas/nylas-ruby.svg?branch=master)
-[![Maintainability](https://api.codeclimate.com/v1/badges/26d5b58447ca8bf213df/maintainability)](https://codeclimate.com/github/nylas/nylas-ruby/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/26d5b58447ca8bf213df/test_coverage)](https://codeclimate.com/github/nylas/nylas-ruby/test_coverage)
+# Nylas Ruby SDK
+The Nylas Communications Platform allows developers to quickly build features that connect to every inbox, calendar, and contacts book in the world. Nylas makes it easy to build an integration that can be completed in days, and provides pre-built security and compliance features, and a 99.9% guaranteed uptime. Integrations with the Nylas Communications Platform are secure, reliable, and easy to use and maintain.
 
-This README is for the Nylas Ruby SDK version 4. For those who are still using Nylas Ruby SDK Version 3, the documentation and source code is located in the [3.X-master branch](https://github.com/nylas/nylas-ruby/tree/3.X-master). For those upgrading from 3.X to 4.0, review the [upgrade guide](https://github.com/nylas/nylas-ruby/wiki/Upgrading-from-3.X-to-4.0)
+Nylas provides REST APIs for [Email](https://docs.nylas.com/docs/quickstart-email), [Calendar](https://docs.nylas.com/docs/quickstart-calendar), and [Contacts](https://docs.nylas.com/docs/quickstart-contacts), and the Ruby SDK is the quickest way to build your first integration using Ruby.
 
-## Installation
+This is the GitHub repository for the Nylas Ruby SDK and is primarily for anyone who wants to make contributions to the SDK or install it from source. If you are looking to use Ruby to access the Nylas Email, Calendar, or Contacts API you should refer to our official [Ruby](https://docs.nylas.com/docs/quickstart-ruby) [SDK Quickstart Guide](https://docs.nylas.com/docs/quickstart-ruby).
+
+Here are some additional resources to help you get started:
+
+- [Nylas SDK Tutorials](https://docs.nylas.com/docs/tutorials)
+- [Get Started with the Nylas Communications Platform](https://docs.nylas.com/docs/getting-started)
+- [Sign up for your Nylas developer account.](https://nylas.com/register)
+- [Nylas API Reference](https://docs.nylas.com/reference)
+
+If you have a question that needs an answer, please reach out to support@nylas.com to get help.
+[](https://nylas.com/register)
+# Install
+## Prerequisites
+- Ruby 2.3 or above.
+- Ruby Frameworks: `rest-client`, `json`, `yajl-ruby`.
+
+We support Rails 4.2 and above. A more detailed compatibility list can be found in our [list of Gemfiles](https://github.com/nylas/nylas-ruby/tree/master/gemfiles).
+
+## Install
 
 Add this line to your application's Gemfile:
 
@@ -14,13 +31,18 @@ And then execute:
 
     bundle
 
-You don't need to use this repo unless you're planning to modify the gem. If you just want to use the Nylas SDK with Ruby bindings, you should run:
+To run scripts that use the Nylas Ruby SDK, install the nylas gem.
 
     gem install nylas
 
-### MacOS 10.11 (El Capitan) note
+To install the SDK from source, clone this repo and install with bundle.
 
-Apple stopped bundling openssl with MacOS 10.11. However, one of the dependencies of this gem (EventMachine) requires it. If you're on El Capitan and are unable to install the gem, try running the following commands in a terminal:
+    git clone https://github.com/nylas/nylas-ruby.git && cd nylas-ruby
+    bundle install
+    
+## MacOS 10.11 (El Capitan) Note
+
+Apple stopped bundling OpenSSL with MacOS 10.11. However, one of the dependencies of this gem (EventMachine) requires it. If you're on El Capitan and are unable to install the gem, try running the following commands in a terminal:
 
 ```
 sudo brew install openssl
@@ -28,74 +50,56 @@ sudo brew link openssl --force
 gem install nylas
 ```
 
-## Requirements
+# Usage
 
-- Ruby 2.2.2 or above.
-- rest-client, json, yajl-ruby, em-http-request
+To use this SDK, you first need to [sign up for a free Nylas developer account](https://nylas.com/register).
 
-### Supported Rails Versions
+Then, follow our guide to [setup your first app and get your API access keys](https://docs.nylas.com/docs/get-your-developer-api-keys).
 
-We support Rails 4.2 and above. A more detailed compatibility list can be found in our [list of Gemfiles](gemfiles)
+All of the functionality of the Nylas Communications Platform is available through the `API` object. To access data for an account that’s connected to Nylas, create a new API client object and pass the variables you gathered when you got your developer API keys. In the following example, replace `CLIENT_ID`, `CLIENT_SECRET`, and `ACCESS_TOKEN` with your values.
 
-## Examples
 
-Examples are located in the [examples](./examples) directory. Examples in plain ruby are in [examples/plain-ruby/](./examples/plain-ruby). They are grouped by the API endpoints they interact with.
+    require 'nylas'
+    
+    nylas = Nylas::API.new(
+        app_id: CLIENT_ID,
+        app_secret: CLIENT_SECRET,
+        access_token: ACCESS_TOKEN
+    )
 
-### Handling Errors
-The Nylas API uses conventional HTTP response codes to indicate success or failure of an API request. The ruby gem raises these as native exceptions.
+Now, you can use `nylas` to access full email, calendar, and contacts functionality. For example, here is how you would print the subject line for the most recent email message to the console.
 
-Code | Error Type | Description
---- | --- | ---
-400 | `InvalidRequest` | Your request has invalid parameters.
-403 | `AccessDenied` | You don't have authorization to access the requested resource or perform the requested action. You may need to re-authenticate the user.
-404 | `ResourceNotFound` | The requested resource doesn't exist.
-500 | `InternalError` | There was an internal error with the Nylas server.
-502 | `BadGateway` | Nylas received an invalid response from the upstream server.
 
-A few additional exceptions are raised by the `draft.send!` method if your draft couldn't be sent.
+    message = nylas.messages.first
+    puts(message.subject)
 
-Code | Error Type | Description
---- | --- | ---
-402 | `MessageRejected` | The message was syntactically valid, but rejected for delivery by the mail server.
-422 | `MailProviderError` | There was an error with the mail provider when trying to send the message
-429 | `SendingQuotaExceeded` | The user has exceeded their daily sending quota.
-503 | `ServiceUnavailable` | There was a temporary error establishing a connection to the user's mail server.
+To learn more about how to use the Nylas Ruby SDK, please refer to our [Ruby](https://docs.nylas.com/docs/quickstart-ruby) [SDK QuickStart Guide](https://docs.nylas.com/docs/quickstart-ruby).
 
-## Open-Source Sync Engine
+# Contributing
 
-The [Nylas Sync Engine](http://github.com/nylas/sync-engine) is open source, and you can also use the Ruby gem with the open source API. Since the open source API provides no authentication or security, connecting to it is simple. When you instantiate the Nylas object, provide `nil` for the App ID and App Secret, and set the API Token to the id of the account you're going to access. Finally, don't forget to pass the fully-qualified address to your copy of the sync engine:
+Please refer to [Contributing](Contributing.md) for information about how to make contributions to this project. We welcome questions, bug reports, and pull requests.
 
-```ruby
-require 'nylas'
-nylas = Nylas::API.new(api_server: 'http://localhost:5555/')
+## Setup Ruby SDK for Development
 
-# Get the id of the first account -- this is the access token we're
-# going to use.
-account_id = nylas.accounts.first.id
+Install [RubyGems](https://rubygems.org/pages/download) if you don't already have it:
 
-# Display the body of the first message for the first account
-nylas = Nylas::API.new(access_token: account_id, api_server: 'http://localhost:5555/')
-puts nylas.messages.first.body
+```shell
+gem install bundler
+gem update --system
 ```
 
-## Development
+Install the SDK from source
 
-### Requirements
+```shell
+bundle install
+```
 
-Install [RubyGems](https://rubygems.org/pages/download) if you don't have it
+You can run tests locally using ```rspec```:
 
-    gem install bundler
-    gem update --system
+```shell
+rspec spec
+```
 
-### Setup
+# License
 
-    bundle install
-
-You can run tests locally using rspec
-
-    rspec spec
-
-
-## Contributing
-
-Our guidelines for contributing are in [CONTRIBUTING.md](./CONTRIBUTING.md).
+This project is licensed under the terms of the MIT license. Please refer to [LICENSE](LICENSE.txt) for the full terms. 

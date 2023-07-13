@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Nylas
   # Structure to represent the Physical Address schema
   # @see https://docs.nylas.com/reference#contactsid
@@ -10,5 +12,6 @@ module Nylas
     attribute :state, :string
     attribute :city, :string
     attribute :country, :string
+    attribute :secondary_address, :string
   end
 end

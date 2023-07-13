@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Nylas
   Error = Class.new(::StandardError)
 
@@ -11,6 +13,8 @@ module Nylas
   class ModelNotSearchableError < ModelActionError; end
   class ModelNotUpdatableError < ModelActionError; end
   class ModelNotDestroyableError < ModelActionError; end
+
+  class JsonParseError < Error; end
 
   # Raised when attempting to set a field that is not on a model with mass assignment
   class ModelMissingFieldError < ModelActionError
@@ -46,6 +50,10 @@ module Nylas
   ResourceNotFound = Class.new(APIError)
   MethodNotAllowed = Class.new(APIError)
   InvalidRequest = Class.new(APIError)
+  UnauthorizedRequest = Class.new(APIError)
+  ResourceRemoved = Class.new(APIError)
+  TeapotError = Class.new(APIError)
+  RequestTimedOut = Class.new(APIError)
   MessageRejected = Class.new(APIError)
   SendingQuotaExceeded = Class.new(APIError)
   ServiceUnavailable = Class.new(APIError)

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Nylas
   # Structure to represent a the Event Schema.
   # @see https://docs.nylas.com/reference#events
@@ -13,6 +15,7 @@ module Nylas
     attribute :calendar_id, :string
     attribute :master_event_id, :string
     attribute :message_id, :string
+    attribute :ical_uid, :string
 
     attribute :busy, :boolean
     attribute :description, :string
@@ -23,7 +26,7 @@ module Nylas
     attribute :read_only, :boolean
     attribute :status, :string
     attribute :title, :string
-    attribute :when, :timespan
+    attribute :when, :when
     attribute :original_start_time, :unix_timestamp
     attr_reader :raw_json
 
@@ -31,6 +34,8 @@ module Nylas
       super(*args, &block)
       @raw_json = JSON.parse(to_json)
     end
+
+    attr_accessor :notify_participants
 
     def busy?
       busy
@@ -58,6 +63,18 @@ module Nylas
       rsvp = Rsvp.new(api: api, status: status, notify_participants: notify_participants,
                       event_id: id, account_id: account_id)
       rsvp.save
+    end
+
+    private
+
+    def query_params
+      if notify_participants.nil?
+        {}
+      else
+        {
+          notify_participants: notify_participants
+        }
+      end
     end
   end
 end

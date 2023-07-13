@@ -1,5 +1,22 @@
+# frozen_string_literal: true
+
 require "json"
 require "rest-client"
+
+# BUGFIX
+#   See https://github.com/sparklemotion/http-cookie/issues/27
+#   and https://github.com/sparklemotion/http-cookie/issues/6
+#
+# CookieJar uses unsafe class caching for dynamically loading cookie jars
+# If 2 rest-client instances are instantiated at the same time, (in threads)
+# non-deterministic behaviour can occur whereby the Hash cookie jar isn't
+# properly loaded and cached.
+# Forcing an instantiation of the jar onload will force the CookieJar to load
+# before the system has a chance to spawn any threads.
+# Note this should technically be fixed in rest-client itself however that
+# library appears to be stagnant so we're forced to fix it here
+# This object should get GC'd as it's not referenced by anything
+HTTP::CookieJar.new
 
 require "ostruct"
 require "forwardable"
@@ -33,10 +50,14 @@ require_relative "nylas/rsvp"
 require_relative "nylas/timespan"
 require_relative "nylas/web_page"
 require_relative "nylas/nylas_date"
+require_relative "nylas/when"
+require_relative "nylas/free_busy"
+require_relative "nylas/time_slot"
 
 # Custom collection types
 require_relative "nylas/search_collection"
 require_relative "nylas/deltas_collection"
+require_relative "nylas/free_busy_collection"
 
 # Models supported by the API
 require_relative "nylas/account"
@@ -59,6 +80,7 @@ require_relative "nylas/native_authentication"
 require_relative "nylas/http_client"
 require_relative "nylas/api"
 
+require_relative "nylas/filter_attributes"
 # an SDK for interacting with the Nylas API
 # @see https://docs.nylas.com/reference
 module Nylas
@@ -86,4 +108,6 @@ module Nylas
   Types.registry[:web_page] = Types::ModelType.new(model: WebPage)
   Types.registry[:nylas_date] = NylasDateType.new
   Types.registry[:contact_group] = Types::ModelType.new(model: ContactGroup)
+  Types.registry[:when] = Types::ModelType.new(model: When)
+  Types.registry[:time_slot] = Types::ModelType.new(model: TimeSlot)
 end

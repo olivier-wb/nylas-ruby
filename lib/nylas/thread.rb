@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Nylas
   # Ruby representation of the Nylas /threads API
   # @see https://docs.nylas.com/reference#threads
@@ -31,6 +33,8 @@ module Nylas
 
     has_n_of_attribute :label_ids, :string
 
+    transfer :api, to: %i[labels folders]
+
     UPDATABLE_ATTRIBUTES = %i[label_ids folder_id starred unread].freeze
     def update(data)
       unupdatable_attributes = data.keys.reject { |name| UPDATABLE_ATTRIBUTES.include?(name) }
@@ -38,7 +42,11 @@ module Nylas
         raise ArgumentError, "Cannot update #{unupdatable_attributes} only " \
                              "#{UPDATABLE_ATTRIBUTES} are updatable"
       end
-      super(data)
+      super(**data)
+    end
+
+    def update_folder(folder_id)
+      update(folder_id: folder_id)
     end
 
     def starred?

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Nylas
   # Ruby bindings for the Nylas Calendar API
   # @see https://docs.nylas.com/reference#calendars
@@ -13,11 +15,18 @@ module Nylas
 
     attribute :name, :string
     attribute :description, :string
+    attribute :is_primary, :boolean
+    attribute :location, :string
+    attribute :timezone, :string
 
     attribute :read_only, :boolean
 
     def read_only?
       read_only == true
+    end
+
+    def primary?
+      is_primary
     end
 
     def events

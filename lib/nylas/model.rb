@@ -1,7 +1,10 @@
+# frozen_string_literal: true
+
 require_relative "model/attribute_definition"
 require_relative "model/list_attribute_definition"
 require_relative "model/attributable"
 require_relative "model/attributes"
+require_relative "model/transferable"
 module Nylas
   # Include this to define a class to represent an object returned from the API
   module Model
@@ -13,6 +16,7 @@ module Nylas
 
     def self.included(model)
       model.include(Attributable)
+      model.include(Transferable)
       model.extend(ClassMethods)
       model.extend(Forwardable)
       model.def_delegators :model_class, :creatable?, :filterable?, :listable?, :searchable?, :showable?,
@@ -23,7 +27,8 @@ module Nylas
     def save
       result = if persisted?
                  raise ModelNotUpdatableError, self unless updatable?
-                 execute(method: :put, payload: attributes.serialize, path: resource_path)
+
+                 save_call
                else
                  create
                end
@@ -34,26 +39,38 @@ module Nylas
       !id.nil?
     end
 
-    def execute(method:, payload: nil, path:)
-      api.execute(method: method, payload: payload, path: path)
+    def execute(method:, payload: nil, path:, query: {})
+      api.execute(method: method, payload: payload, path: path, query: query)
     end
 
     def create
       raise ModelNotCreatableError, self unless creatable?
-      execute(method: :post, payload: attributes.serialize, path: resources_path)
+
+      execute(
+        method: :post,
+        payload: attributes.serialize,
+        path: resources_path,
+        query: query_params
+      )
     end
 
     def update(**data)
       raise ModelNotUpdatableError, model_class unless updatable?
+
       attributes.merge(**data)
-      execute(method: :put, payload: attributes.serialize(keys: data.keys), path: resource_path)
+      execute(
+        method: :put,
+        payload: attributes.serialize(keys: data.keys),
+        path: resource_path,
+        query: query_params
+      )
       true
     rescue Registry::MissingKeyError => e
       raise ModelMissingFieldError.new(e.key, self)
     end
 
     def reload
-      assign(execute(method: :get, path: resource_path))
+      assign(**execute(method: :get, path: resource_path))
       true
     end
 
@@ -67,12 +84,33 @@ module Nylas
 
     def destroy
       raise ModelNotDestroyableError, self unless destroyable?
-      execute(method: :delete, path: resource_path)
+
+      execute(method: :delete, path: resource_path, query: query_params)
     end
 
     # @return [String] JSON String of the model.
-    def to_json
+    def to_json(_opts = {})
       JSON.dump(to_h)
+    end
+
+    private
+
+    def allowed_keys_for_save
+      attributes.attribute_definitions.to_h.reject do |_k, v|
+        v.exclude_when.include?(:saving)
+      end.keys
+    end
+
+    def save_call
+      execute(
+        method: :put,
+        payload: attributes.serialize(keys: allowed_keys_for_save),
+        path: resource_path
+      )
+    end
+
+    def query_params
+      {}
     end
 
     # Allows you to narrow in exactly what kind of model you're working with
@@ -81,7 +119,6 @@ module Nylas
                     :destroyable
       attr_writer :resources_path
 
-      # rubocop:disable Metrics/ParameterLists
       def allows_operations(creatable: false, showable: false, listable: false, filterable: false,
                             searchable: false, updatable: false, destroyable: false)
 
@@ -94,7 +131,6 @@ module Nylas
         self.destroyable ||= destroyable
       end
 
-      # rubocop:enable Metrics/ParameterLists
       def creatable?
         creatable
       end

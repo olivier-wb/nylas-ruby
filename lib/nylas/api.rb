@@ -6,7 +6,7 @@ module Nylas
     attr_accessor :client
 
     extend Forwardable
-    def_delegators :client, :execute, :get, :post, :put, :delete, :app_id, :api_server
+    def_delegators :client, :execute, :get, :post, :put, :delete, :app_id
 
     include Logging
 
@@ -49,7 +49,7 @@ module Nylas
 
       "#{api_server}/oauth/authorize?#{URI.encode_www_form(params)}"
     end
-
+    
     def exchange_code_for_token(code)
       data = {
         "client_id" => app_id,

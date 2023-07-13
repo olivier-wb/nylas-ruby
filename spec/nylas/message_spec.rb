@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Nylas::Message do
   let(:data) do
     data = { id: "mess-8766", object: "message", account_id: "acc-1234", thread_id: "thread-1234",
@@ -67,6 +69,7 @@ describe Nylas::Message do
       expect(event.object).to eql "event"
       expect(event.account_id).to eql "acc-1234"
       expect(event.message_id).to eql "mess-8766"
+      expect(event.api).to be api
 
       expect(event).to be_busy
       expect(event.calendar_id).to eql "cal-0987"
@@ -96,24 +99,166 @@ describe Nylas::Message do
       expect(message.files[0].filename).to be_nil
       expect(message.files[0].id).to eql "file-abc35"
       expect(message.files[0].size).to be 1264
+      expect(message.files[0].api).to be api
 
       expect(message.files[1].content_type).to eql "application/ics"
       expect(message.files[1].filename).to eql "invite.ics"
       expect(message.files[1].id).to eql "file-xyz-9234"
       expect(message.files[1].size).to be 1264
+      expect(message.files[1].api).to be api
 
       # Note, messages will either be in a folder *or* labeled, not both.
       expect(message.folder.display_name).to eql "Inbox"
       expect(message.folder.name).to eql "inbox"
       expect(message.folder.id).to eql "folder-inbox"
+      expect(message.folder.api).to be api
 
       expect(message.labels[0].display_name).to eql "Inbox"
       expect(message.labels[0].id).to eql "label-inbox"
       expect(message.labels[0].name).to eql "inbox"
+      expect(message.labels[0].api).to be api
 
       expect(message.labels[1].display_name).to eql "All Mail"
       expect(message.labels[1].id).to eql "label-all"
       expect(message.labels[1].name).to eql "all"
+      expect(message.labels[1].api).to be api
+    end
+  end
+
+  describe "#save" do
+    context "when `labels` key exists" do
+      it "removes `labels` from the payload" do
+        api = instance_double(Nylas::API, execute: JSON.parse("{}"))
+        data = {
+          id: "message-1234",
+          labels: [
+            { display_name: "All Mail", id: "label-all", name: "all" }
+          ]
+        }
+
+        message = described_class.from_json(
+          JSON.dump(data),
+          api: api
+        )
+
+        message.save
+
+        expect(api).to have_received(:execute).with(
+          method: :put,
+          path: "/messages/message-1234",
+          payload: JSON.dump(
+            id: "message-1234"
+          ),
+          query: {}
+        )
+      end
+    end
+
+    it "removes the folder node and replaces with folder_id" do
+      api = instance_double(Nylas::API, execute: JSON.parse("{}"))
+      data = {
+        id: "message-1234",
+        folder: { display_name: "Inbox", id: "folder-inbox", name: "inbox" },
+        starred: true
+      }
+
+      message = described_class.from_json(
+        JSON.dump(data),
+        api: api
+      )
+
+      message.save
+
+      expect(api).to have_received(:execute).with(
+        method: :put,
+        path: "/messages/message-1234",
+        payload: JSON.dump(
+          id: "message-1234",
+          starred: true,
+          folder_id: "folder-inbox"
+        ),
+        query: {}
+      )
+    end
+    it "does not overwrite folder_id if set" do
+      api = instance_double(Nylas::API, execute: JSON.parse("{}"))
+      data = {
+        id: "message-1234",
+        folder: { display_name: "Inbox", id: "folder-inbox", name: "inbox" },
+        folder_id: "folder-1234",
+        starred: true
+      }
+
+      message = described_class.from_json(
+        JSON.dump(data),
+        api: api
+      )
+
+      message.save
+
+      expect(api).to have_received(:execute).with(
+        method: :put,
+        path: "/messages/message-1234",
+        payload: JSON.dump(
+          id: "message-1234",
+          starred: true,
+          folder_id: "folder-1234"
+        ),
+        query: {}
+      )
+    end
+  end
+
+  describe "#update" do
+    it "let's you set the starred, unread, folder, and label ids" do
+      api = instance_double(Nylas::API, execute: JSON.parse("{}"))
+      message = described_class.from_json('{ "id": "message-1234" }', api: api)
+
+      message.update(
+        starred: true,
+        unread: false,
+        folder_id: "folder-1234",
+        label_ids: %w[label-1234 label-4567]
+      )
+
+      expect(api).to have_received(:execute).with(
+        method: :put,
+        path: "/messages/message-1234",
+        payload: JSON.dump(
+          starred: true, unread: false,
+          folder_id: "folder-1234",
+          label_ids: %w[
+            label-1234
+            label-4567
+          ]
+        ),
+        query: {}
+      )
+    end
+    it "raises an argument error if the data has any keys that aren't allowed to be updated" do
+      api = instance_double(Nylas::API, execute: "{}")
+      message = described_class.from_json('{ "id": "message-1234" }', api: api)
+      expect do
+        message.update(subject: "A new subject!")
+      end.to raise_error ArgumentError, "Only #{described_class::UPDATABLE_ATTRIBUTES} are allowed to be sent"
+    end
+  end
+
+  describe "update_folder" do
+    it "moves message to new `folder`" do
+      folder_id = "9999"
+      api = instance_double(Nylas::API, execute: "{}")
+      message = described_class.from_json('{ "id": "message-1234" }', api: api)
+      allow(api).to receive(:execute)
+
+      message.update_folder(folder_id)
+
+      expect(api).to have_received(:execute).with(
+        method: :put,
+        path: "/messages/message-1234",
+        payload: { folder_id: folder_id }.to_json,
+        query: {}
+      )
     end
   end
 

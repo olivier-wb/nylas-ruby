@@ -1,9 +1,12 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 
 describe Nylas::CurrentAccount do
   it "is not filterable" do
     expect(described_class).not_to be_filterable
   end
+
   it "is not listable" do
     expect(described_class).not_to be_listable
   end

@@ -1,3 +1,82 @@
+### Unreleased
+
+* Support for Ruby 3.
+* Add support for `/free-busy` endpoint #288
+* Fix issue where download a file fetch via `find` failed #258, #287
+
+### 4.6.6 / 2021-04-06
+
+* Add support for `notify_participants` when creating events
+* Add provider attribute to account
+
+### 4.6.5 / 2021-02-22
+
+* Add `content_disposition` field to File
+* Fix thread-safety issue in HTTP::CookieJar loading
+
+### 4.6.4 / 2021-02-03
+
+* fix failing http_client spec after merging main
+* Skip parsing response if content is not JSON
+* Add missing http status codes / errors.
+* Add reply_to to NewMessage
+* Add message tracking to drafts.
+* Truncate the returned filename so it's less than 256 characters and compatible with rb_sysopen.
+* Bump required rest client dep to >= 2.0, remove travis ci tests for rest client 1, ruby v2.3
+* Use to_json helper instead of JSON.dump.
+
+### 4.6.3 / 2020-12-18
+
+* Remove folder on message.save for updates
+* Fix JSON parsing behavior
+* Fix rubocop warnings for http_client and spec
+* No longer rescue json parse errors, use Yajl instead of JSON for parsing responses (due to unicode issue).
+* Add specs for changes to message.save
+* Store folder id in folder_id and remove folder if present before saving.
+* Adding secondary_address field to physical address model
+
+### 4.6.2 / 2020-09-08
+
+* Add support to move `message` and `thread` between `folder`.
+* Handle new attributes added to API gracefully
+* Add is_primary and other new Calendar attributes
+
+### 4.6.1 / 2020-01-06
+
+* Fix a bug with `when` blocks when creating events
+* Add support for the Event.ical_uid field
+
+### 4.6.0 / 2019-09-25
+
+* Add support for `/contacts/groups` endpoint.
+* Fix issue when calling `.save` on `message` (https://github.com/nylas/nylas-ruby/pull/233)
+* Add support for Rails 6.
+* Fix issue for updating `message` with sending `label_ids` (https://github.com/nylas/nylas-ruby/pull/231)
+* Support for `when` in `Nylas::Event` for more attributes.
+* Add internal transfer api to support initialize related objects.
+* Fix encoding issues when downloading attachments.
+
+### 4.5.0 / 2019-04-15
+
+* Add support for `source` attribute in Contact model
+
+### 4.4.0 / 2019-04-05
+
+* Add support for `/ip_addresses` endpoint
+* Add optional argument for `Model#to_json`
+* Reintroduce support for Ruby 2.3
+* Add Rails 4 bundler support to setup script
+* Specify gemfiles called in test script
+
+### 4.3.0 / 2019-03-18
+
+* Drop support for Ruby 2.2 and 2.3: they have reached end-of-life
+* Add support for Ruby 2.5 and 2.6
+* Add `scopes` argument to `Nylas::API#authenticate` for
+  [selective sync](https://docs.nylas.com/docs/how-to-use-selective-sync)
+* Add `Account#revoke_all`
+* Add X-Nylas-Client-Id header for HTTP requests
+
 ### 4.2.4 / 2018-08-07
 * Enables silent addition of fields to API without impact to SDK
 * Fixes api attribute breakage on enumeration (https://github.com/nylas/nylas-ruby/issues/188)

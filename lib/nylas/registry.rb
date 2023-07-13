@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Nylas
   # Used to create a hash-like structure which defaults to raising an exception in the event the key to
   # retrieve does not exist.
@@ -6,6 +8,7 @@ module Nylas
     # Includes the list of keys in the registry for debug purposes.
     class MissingKeyError < Error
       attr_accessor :key
+
       def initialize(key, keys)
         super("key #{key} not in #{keys}")
         self.key = key
